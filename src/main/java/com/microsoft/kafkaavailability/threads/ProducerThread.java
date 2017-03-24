@@ -54,7 +54,7 @@ public class ProducerThread implements Callable<Long> {
         long elapsedTime = 0L;
 
         do {
-            long lStartTime = System.nanoTime();
+            long lStartTime = System.currentTimeMillis();
             MetricRegistry metrics;
             m_logger.info(Thread.currentThread().getName() +
                     " - Producer party has arrived and is working in "
@@ -67,12 +67,13 @@ public class ProducerThread implements Callable<Long> {
                 metricsFactory.start();
                 metrics = metricsFactory.getRegistry();
                 RunProducer(metrics);
-                metricsFactory.report();
-                CommonUtils.sleep(1000);
+
             } catch (Exception e) {
                 m_logger.error(e.getMessage(), e);
             } finally {
                 try {
+                    metricsFactory.report();
+                    CommonUtils.sleep(1000);
                     metricsFactory.stop();
                 } catch (Exception e) {
                     m_logger.error(e.getMessage(), e);
