@@ -21,6 +21,8 @@ public class AppProperties
     public boolean sendConsumerAvailability;
     public boolean sendProducerTopicAvailability;
     public boolean sendConsumerTopicAvailability;
+    public boolean sendProducerPartitionAvailability;
+    public boolean sendConsumerPartitionAvailability;
     public boolean sendProducerLatency;
     public boolean sendGTMAvailabilityLatency;
     public boolean sendKafkaIPAvailabilityLatency;

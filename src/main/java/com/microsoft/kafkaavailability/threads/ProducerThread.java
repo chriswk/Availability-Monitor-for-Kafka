@@ -162,6 +162,7 @@ public class ProducerThread implements Callable<Long> {
             }
 
             for (kafka.javaapi.PartitionMetadata part : item.partitionsMetadata()) {
+                int partitionProducerFailCount = 0;
                 m_logger.debug("Writing to Topic: {}; Partition: {};", item.topic(), part.partitionId());
                 MetricNameEncoded producerPartitionLatency = new MetricNameEncoded("Producer.Partition.Latency", item.topic() + "##" + part.partitionId());
                 Histogram histogramProducerPartitionLatency = new Histogram(new SlidingWindowReservoir(1));
@@ -177,6 +178,7 @@ public class ProducerThread implements Callable<Long> {
                 } catch (Exception e) {
                     m_logger.error("Error Writing to Topic: {}; Partition: {}; Exception: {}", item.topic(), part.partitionId(), e);
                     topicProducerFailCount++;
+                    partitionProducerFailCount++;
                     endTime = System.currentTimeMillis() + DEFAULT_ELAPSED_TIME;
                     if (isTopicAvailable) {
                         producerFailCount++;
@@ -186,6 +188,13 @@ public class ProducerThread implements Callable<Long> {
                 histogramProducerLatency.update(endTime - startTime);
                 histogramProducerTopicLatency.update(endTime - startTime);
                 histogramProducerPartitionLatency.update(endTime - startTime);
+
+                if (appProperties.sendProducerPartitionAvailability) {
+                    MetricNameEncoded producerPartitionAvailability = new MetricNameEncoded("Producer.Partition.Availability", item.topic() + "##" + part.partitionId());
+                    if (!metrics.getNames().contains(new Gson().toJson(producerPartitionAvailability))) {
+                        metrics.register(new Gson().toJson(producerPartitionAvailability), new AvailabilityGauge(1, 1 - partitionProducerFailCount));
+                    }
+                }
             }
             if (appProperties.sendProducerTopicAvailability) {
                 MetricNameEncoded producerTopicAvailability = new MetricNameEncoded("Producer.Topic.Availability", item.topic());
