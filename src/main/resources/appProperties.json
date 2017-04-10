@@ -9,6 +9,8 @@
   "sendConsumerAvailability": true,
   "sendProducerTopicAvailability": true,
   "sendConsumerTopicAvailability": true,
+  "sendProducerPartitionAvailability": true,
+  "sendConsumerPartitionAvailability": true,
   "sendProducerLatency": true,
   "sendConsumerLatency": true,
   "sendGTMAvailabilityLatency": true,

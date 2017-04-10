@@ -198,6 +198,7 @@ public class ConsumerThread implements Callable<Long> {
 
             int topicConsumerFailCount = 0;
             for (Integer key : response.keySet()) {
+                int partitionConsumerFailCount = 0;
                 long elapsedTime = DEFAULT_ELAPSED_TIME;
                 try {
                     // Future.get() waits for task to get completed
@@ -207,6 +208,7 @@ public class ConsumerThread implements Callable<Long> {
                 }
                 if (elapsedTime >= DEFAULT_ELAPSED_TIME) {
                     topicConsumerFailCount++;
+                    partitionConsumerFailCount++;
                     if (isTopicAvailable) {
                         consumerFailCount++;
                         isTopicAvailable = false;
@@ -221,6 +223,12 @@ public class ConsumerThread implements Callable<Long> {
                 histogramConsumerPartitionLatency.update(elapsedTime);
                 histogramConsumerTopicLatency.update(elapsedTime);
                 histogramConsumerLatency.update(elapsedTime);
+                if (appProperties.sendConsumerPartitionAvailability) {
+                    MetricNameEncoded consumerPartitionAvailability = new MetricNameEncoded("Consumer.Partition.Availability", item.topic() + "##" + key);
+                    if (!metrics.getNames().contains(new Gson().toJson(consumerPartitionAvailability))) {
+                        metrics.register(new Gson().toJson(consumerPartitionAvailability), new AvailabilityGauge(1, 1 - partitionConsumerFailCount));
+                    }
+                }
             }
             if (appProperties.sendConsumerTopicAvailability) {
                 MetricNameEncoded consumerTopicAvailability = new MetricNameEncoded("Consumer.Topic.Availability", item.topic());

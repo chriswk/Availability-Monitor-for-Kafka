@@ -237,11 +237,20 @@ public class App {
         CommonUtils.dumpPhaserState("Before main thread arrives and deregisters", phaser);
         //Wait for the consumer thread to finish, Rest other threads can keep running multiple times, while the consumer thread is executing.
         while (!phaser.isTerminated()) {
-                  /*arriveAndAwaitAdvance() will cause thread to wait until current phase
-                   * has been completed i.e. until all registered threads
-                   * call arriveAndAwaitAdvance()
-                   */
-            phaser.arriveAndAwaitAdvance();
+
+            /**
+             * This block will try a TimeoutException. Why ? Because the phase isn't advanced.
+             * It will be advanced when all registered tasks will invoke arrive* method.
+             */
+
+            try {
+                //Awaits the phase of this phaser to advance from the given phase value or the given timeout to elapse, throwing InterruptedException if interrupted while waiting,
+                // or returning immediately if the current phase is not equal to the given phase value or this phaser is terminated.
+                phaser.awaitAdvanceInterruptibly(phaser.arrive(), mainThreadsTimeoutInSeconds, TimeUnit.SECONDS);
+            } catch (TimeoutException te) {
+                m_logger.error("Super thread timed out for " + mainThreadsTimeoutInSeconds + " " + TimeUnit.SECONDS + ", but super thread will advance.");
+            } catch (InterruptedException ie) {
+            }
 
             try {
                 /*
