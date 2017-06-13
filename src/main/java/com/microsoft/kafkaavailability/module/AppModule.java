@@ -68,6 +68,10 @@ public class AppModule extends AbstractModule {
                 }
             }
 
+            if(commandLine.hasOption("keyStorePassword")) {
+                appProperties.keyStoreFilePassword = commandLine.getOptionValue("keyStorePassword");
+            }
+
             return appProperties;
 
         } catch (IOException e) {

@@ -4,6 +4,10 @@
   "reportKafkaIPAvailability": true,
   "kafkaGTMIP":["https://myTestEndpoint001.trafficmanager.net?topic=","https://myTestEndpoint002.trafficmanager.net?topic="],
   "kafkaIP":["https://myTestEndpointVIP003.trafficmanager.net?topic=","https://myTestEndpointVIP004.trafficmanager.net?topic="],
+  "useCertificateToConnectToKafkaGTM": false,
+  "useCertificateToConnectToKafkaIP": false,
+  "keyStoreFilePath": "/path/to/keystore",
+  "keyStoreFilePassword": "password",
   "sendProducerAvailability": true,
   "sendConsumerAvailability": true,
   "sendProducerTopicAvailability": true,
@@ -25,5 +29,5 @@
   "consumerPartitionTimeoutInSeconds": 30,
   "consumerTopicTimeoutInSeconds": 60,
   "mainThreadsTimeoutInSeconds": 30,
-  "heartBeatIntervalInSeconds": 60
+  "heartBeatIntervalInSeconds": 30
 }

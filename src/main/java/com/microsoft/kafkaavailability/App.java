@@ -57,6 +57,7 @@ public class App {
         options.addOption("r", "run", true, "Number of runs. Don't use this argument if you want to run infinitely.");
         options.addOption("s", "sleep", true, "Time (in milliseconds) to sleep between each run. Default is 30000");
         options.addOption("c", "cluster", true, "Cluster name. will pull from here if appProperties is null");
+        options.addOption("p", "keyStorePassword", true, "Password to load KeyStore file, which is uesed to connect to cluster's secured public IP");
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
