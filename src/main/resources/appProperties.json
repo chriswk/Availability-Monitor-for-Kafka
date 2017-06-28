@@ -1,6 +1,5 @@
 {
   "environmentName": "localhost",
-  "sqlConnectionString": "jdbc:sqlserver://test;DatabaseName=test;lockTimeout=30000;loginTimeout=30000;user=test;password=test",
   "reportKafkaGTMAvailability": true,
   "reportKafkaIPAvailability": true,
   "kafkaGTMIP":["https://myTestEndpoint001.trafficmanager.net?topic=","https://myTestEndpoint002.trafficmanager.net?topic="],
@@ -25,6 +24,6 @@
   "reportInterval": 0,
   "consumerPartitionTimeoutInSeconds": 30,
   "consumerTopicTimeoutInSeconds": 60,
-  "mainThreadsTimeoutInSeconds": 600,
+  "mainThreadsTimeoutInSeconds": 30,
   "heartBeatIntervalInSeconds": 60
 }

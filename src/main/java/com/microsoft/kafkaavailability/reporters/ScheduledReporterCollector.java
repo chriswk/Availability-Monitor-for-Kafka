@@ -3,121 +3,68 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //*********************************************************
 
-package com.microsoft.kafkaavailability.metrics;
+package com.microsoft.kafkaavailability.reporters;
 
 import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
-import com.microsoft.kafkaavailability.IPropertiesManager;
-import com.microsoft.kafkaavailability.PropertiesManager;
+import com.google.inject.Inject;
+import com.microsoft.kafkaavailability.metrics.LoggingMetricListener;
 import com.microsoft.kafkaavailability.properties.AppProperties;
+import com.microsoft.kafkaavailability.properties.ReporterProperties;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public class MetricsFactory implements IMetricsFactory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetricsFactory.class);
-    //private static final MetricsFactory INSTANCE = new MetricsFactory();
+public class ScheduledReporterCollector {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledReporterCollector.class);
+    private static final String SEP = ":";
+    private static final int DEFAULT_REPORT_INTERVAL_IN_SECONDS = 60;
 
     private final MetricRegistry metricRegistry;
-    private List<ConfiguredReporter> reporters = Collections.synchronizedList(new LinkedList<ConfiguredReporter>());
 
-    /**
-     * A reporter that knows how to start and stop itself with a pre-configured
-     * reporting period.
-     */
-    private static class ConfiguredReporter {
-        private ScheduledReporter reporter;
-        private long period;
+    private int reportIntervalInSeconds = DEFAULT_REPORT_INTERVAL_IN_SECONDS;
+    private final List<ScheduledReporter> reporters;
 
-        /**
-         * Create a new instance.
-         *
-         * @param reporter the reporter
-         * @param period   period in milliseconds. Values less than zero mean that the reporter
-         *                 should not be scheduled, but may be used ad hoc through
-         *                 report function.
-         */
-        public ConfiguredReporter(ScheduledReporter reporter, long period) {
-            this.reporter = reporter;
-            this.period = period;
-        }
+    @Inject
+    public ScheduledReporterCollector(AppProperties appProperties, ReporterProperties reporterProperties,
+                                      MetricRegistry metricRegistry,
+                                      Map<String, ScheduledReporter> allReporters) throws Exception {
+        LOGGER.debug("Configuring metrics");
 
-        /**
-         * Start the reporter (if it has a regular period).
-         */
-        public void start() {
-            if (period > 0) {
-                reporter.start(period, TimeUnit.MILLISECONDS);
+        Integer period = appProperties.reportInterval;
+        this.reportIntervalInSeconds = period > 0 ? period : DEFAULT_REPORT_INTERVAL_IN_SECONDS;
+
+
+        reporters = selectReporters(reporterProperties, allReporters);
+
+        //This is the singleton metric registry shared across the board
+        this.metricRegistry = metricRegistry;
+        // Install the logging listener (probably a configuration item)
+        this.metricRegistry.addListener(new LoggingMetricListener());
+
+        LOGGER.info("Reporters have been configured");
+    }
+
+    private List<ScheduledReporter> selectReporters(ReporterProperties reporterProperties, Map<String, ScheduledReporter> allReporters) {
+        List<ScheduledReporter> reportersToUse;
+
+        if(StringUtils.isBlank(reporterProperties.reportersCommaSeparatedList)) {
+            reportersToUse = new ArrayList<>(allReporters.values());
+        } else {
+            reportersToUse = new ArrayList<>();
+            List<String> reporterNames = Arrays.asList(reporterProperties.reportersCommaSeparatedList.split(","));
+            for(String name : reporterNames) {
+               if(allReporters.containsKey(name)) {
+                   LOGGER.debug(name + " is added to ScheduledReporterCollector.");
+                   reportersToUse.add(allReporters.get(name));
+               }
             }
         }
 
-        /**
-         * Stop the reporter.
-         */
-        public void stop() {
-            reporter.stop();
-        }
-
-        /**
-         * Immediately send a report on the metrics.
-         */
-        public void report() {
-            reporter.report();
-        }
-    }
-
-    /**
-     * Singleton access functions, but with package level access only for
-     * testing.
-     */
-    public MetricsFactory() {
-        this(new MetricRegistry());
-    }
-
-    /**
-     * Singleton access functions, but with package level access only for
-     * testing
-     *
-     * @param registry the registry for use.
-     */
-    public MetricsFactory(MetricRegistry registry) {
-        metricRegistry = registry;
-    }
-
-    /**
-     * Configure the instance.
-     *
-     * @throws Exception
-     */
-    @Override
-    public void configure(String clusterName) throws Exception {
-        LOGGER.debug("Configuring metrics");
-
-        stop();
-        reporters.clear();
-
-        IPropertiesManager appPropertiesManager = new PropertiesManager<AppProperties>("appProperties.json", AppProperties.class);
-        AppProperties appProperties = (AppProperties) appPropertiesManager.getProperties();
-        String sqlConnectionString = appProperties.sqlConnectionString;
-        Integer period = appProperties.reportInterval;
-
-        Map<String, Object> config = new HashMap<>();
-        config.put("sqlConnectionString", sqlConnectionString);
-        config.put("period", period);
-        config.put("cluster", clusterName);
-
-        ScheduledReporter consoleReporter = ReporterUtils.createConsoleReporter(metricRegistry, config);
-        reporters.add(new ConfiguredReporter(consoleReporter, period * 1000));
-
-        ScheduledReporter sqlReporter = ReporterUtils.createSqlReporter(metricRegistry, config);
-        reporters.add(new ConfiguredReporter(sqlReporter, period * 1000));
-
-        // Install the logging listener (probably a configuration item)
-        metricRegistry.addListener(new LoggingMetricListener());
-
-        LOGGER.info("Metrics have been configured");
+        return Collections.synchronizedList(reportersToUse);
     }
 
     /**
@@ -225,7 +172,7 @@ public class MetricsFactory implements IMetricsFactory {
      * @return
      */
     public String makeName(String base, String name) {
-        return base + Metrics.SEP + name;
+        return base + SEP + name;
     }
 
     /**
@@ -239,23 +186,21 @@ public class MetricsFactory implements IMetricsFactory {
         return makeName(clazz.getCanonicalName(), name);
     }
 
-    @Override
     public void start() {
         LOGGER.debug("Starting metrics");
         // Start the reporters
         synchronized (reporters) {
-            Iterator<ConfiguredReporter> reporterIterator = reporters.listIterator();
+            Iterator<ScheduledReporter> reporterIterator = reporters.listIterator();
             while (reporterIterator.hasNext()) {
-                reporterIterator.next().start();
+                reporterIterator.next().start(reportIntervalInSeconds, TimeUnit.SECONDS);
             }
         }
     }
 
-    @Override
     public void stop() {
         LOGGER.debug("Stopping metrics");
         synchronized (reporters) {
-            Iterator<ConfiguredReporter> reporterIterator = reporters.listIterator();
+            Iterator<ScheduledReporter> reporterIterator = reporters.listIterator();
             while (reporterIterator.hasNext()) {
                 reporterIterator.next().stop();
             }
@@ -280,7 +225,7 @@ public class MetricsFactory implements IMetricsFactory {
      * Force send metrics to the reporters (out of scheduled time)
      */
     public void report() {
-        for (ConfiguredReporter reporter : reporters) {
+        for (ScheduledReporter reporter : reporters) {
             reporter.report();
         }
     }

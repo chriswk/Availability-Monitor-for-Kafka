@@ -5,12 +5,14 @@
 
 package com.microsoft.kafkaavailability.threads;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.microsoft.kafkaavailability.discovery.CommonUtils;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.microsoft.kafkaavailability.module.MonitorTasksModule;
+import com.microsoft.kafkaavailability.properties.AppProperties;
+import com.microsoft.kafkaavailability.reporters.ScheduledReporterCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -19,34 +21,39 @@ import java.util.concurrent.TimeUnit;
  */
 public class HeartBeat {
 
-    private ScheduledExecutorService scheduler;
-
+    private final ScheduledReporterCollector scheduledReporterCollector;
+    private final ScheduledExecutorService scheduler;
     private final String serverName;
-    private final String clusterName;
     private final long heartBeatIntervalInSeconds;
-    final static Logger logger = LoggerFactory.getLogger(HeartBeat.class);
+    final static Logger LOGGER = LoggerFactory.getLogger(HeartBeat.class);
 
-    public HeartBeat(String clusterName, long heartBeatIntervalInSeconds) {
-        serverName = CommonUtils.getComputerName();
-        this.clusterName = clusterName;
-        this.heartBeatIntervalInSeconds = heartBeatIntervalInSeconds;
+    @Inject
+    public HeartBeat(ScheduledReporterCollector scheduledReporterCollector, AppProperties appProperties,
+                     @Named(MonitorTasksModule.LOCAL_HOST_NAME_CONSTANT_NAME) String localHostName,
+                     @Named("hearBeatExecutorService") ScheduledExecutorService scheduledExecutorService) {
+
+        this.scheduledReporterCollector = scheduledReporterCollector;
+        //default to 1 minute, if not configured
+        this.heartBeatIntervalInSeconds = (appProperties.heartBeatIntervalInSeconds > 0 ? appProperties.heartBeatIntervalInSeconds : 30);
+
+        this.serverName = localHostName;
+        this.scheduler = scheduledExecutorService;
     }
 
     public void start() {
+        LOGGER.info(String.format("Starting heartbeat for %s to run every %d seconds with a zero-second delay time", serverName, heartBeatIntervalInSeconds));
 
-        scheduler = Executors.newSingleThreadScheduledExecutor(new
-                ThreadFactoryBuilder().setNameFormat("HeartBeat-Thread")
-                .build());
-        logger.info(String.format("Starting heartbeat for %s to run every %d seconds with a zero-second delay time", serverName, heartBeatIntervalInSeconds));
-
-        scheduler.scheduleAtFixedRate(new HeartBeatThread(clusterName, serverName), 0L, heartBeatIntervalInSeconds, TimeUnit.SECONDS);
+        scheduledReporterCollector.start();
+        scheduler.scheduleAtFixedRate(new HeartBeatThread(scheduledReporterCollector, serverName), 0L, heartBeatIntervalInSeconds, TimeUnit.SECONDS);
     }
 
     public void stop() {
-        logger.info(String.format("Stopping heartbeat for %s", serverName));
+        LOGGER.info(String.format("Stopping heartbeat for %s", serverName));
 
         if (scheduler != null) {
             scheduler.shutdownNow();
         }
+
+        scheduledReporterCollector.stop();
     }
 }

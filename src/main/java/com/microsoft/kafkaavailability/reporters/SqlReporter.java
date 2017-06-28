@@ -3,11 +3,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //*********************************************************
 
-package com.microsoft.kafkaavailability.metrics;
+package com.microsoft.kafkaavailability.reporters;
 
 import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
 import com.google.gson.Gson;
+import com.microsoft.kafkaavailability.exception.SQLConnectionInterruptedException;
+import com.microsoft.kafkaavailability.metrics.MetricNameEncoded;
 import com.microsoft.kafkaavailability.sql.JdbcConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -286,7 +288,10 @@ public class SqlReporter extends ScheduledReporter {
                 try {
                     con = poolMgr.getConnection();
                     // Create and execute an SQL statement that returns some data.
-                    String SQL = String.format(String.format("insert into [dbo].[%s] values('%s','%s','%s',%s)", metricNameEncoded.name, userId, sdf.format(new Date(timestamp * 1000)), metricNameEncoded.tag, line), values);
+
+                    String date = sdf.format(new Date(timestamp * 1000));
+                    String sql1 = String.format("insert into [dbo].[%s] values('%s','%s','%s',%s)", metricNameEncoded.name, userId, date, metricNameEncoded.tag, line);
+                    String SQL = String.format(sql1, values);
 
                     if (null != con) {
                         stmt = con.createStatement();
@@ -297,6 +302,9 @@ public class SqlReporter extends ScheduledReporter {
                     }
                 } catch (java.sql.SQLException e) {
                     logSQLException(e);
+                } catch (SQLConnectionInterruptedException e) {
+                    //It's fine to be interrupted in most case, e.g. when application is terminating
+                    m_logger.warn("SQL connection got interrupted");
                 } catch (Exception e) {
                     m_logger.error(e.getMessage(), e);
                 } finally {
