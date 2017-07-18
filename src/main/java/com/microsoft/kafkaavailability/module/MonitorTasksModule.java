@@ -28,13 +28,12 @@ public class MonitorTasksModule extends AbstractModule {
     private final static Logger LOGGER = LoggerFactory.getLogger(MonitorTasksModule.class);
 
     public static final String LOCAL_IP_CONSTANT_NAME = "localIPAddress";
-    public static final String LOCAL_HOST_NAME_CONSTANT_NAME = "localHostName";
     public static final String CURATOR_PORT_CONSTANT_NAME = "curatorPort";
+    public static final String HEART_BEAT_EXECUTOR_SERVICE = "heartBeatExecutorService";
 
     @Override
     protected void configure() {
         bindConstant().annotatedWith(Names.named(LOCAL_IP_CONSTANT_NAME)).to(CommonUtils.getIpAddress());
-        bindConstant().annotatedWith(Names.named(LOCAL_HOST_NAME_CONSTANT_NAME)).to(CommonUtils.getComputerName());
         bindConstant().annotatedWith(Names.named(CURATOR_PORT_CONSTANT_NAME)).to(generateCuratorPort());
 
         install(new FactoryModuleBuilder().build(MonitorTaskFactory.class));
@@ -79,7 +78,7 @@ public class MonitorTasksModule extends AbstractModule {
     }
 
     @Provides
-    @Named("hearBeatExecutorService")
+    @Named(HEART_BEAT_EXECUTOR_SERVICE)
     public ScheduledExecutorService hearBeatExecutorService() {
         return Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactoryBuilder()
