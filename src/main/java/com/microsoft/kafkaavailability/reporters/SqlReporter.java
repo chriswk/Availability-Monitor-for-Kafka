@@ -277,7 +277,7 @@ public class SqlReporter extends ScheduledReporter {
         int iMaxRetries = 10;
 
         MetricNameEncoded metricNameEncoded = new Gson().fromJson(name, MetricNameEncoded.class);
-        final long timestamp = metricNameEncoded.timeInSeconds();
+        final long timestamp = System.currentTimeMillis();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
@@ -289,7 +289,7 @@ public class SqlReporter extends ScheduledReporter {
                     con = poolMgr.getConnection();
                     // Create and execute an SQL statement that returns some data.
 
-                    String date = sdf.format(new Date(timestamp * 1000));
+                    String date = sdf.format(new Date(timestamp));
                     String sql1 = String.format("insert into [dbo].[%s] values('%s','%s','%s',%s)", metricNameEncoded.name, userId, date, metricNameEncoded.tag, line);
                     String SQL = String.format(sql1, values);
 
