@@ -1,0 +1,28 @@
+{
+  "id": "kat",
+  "instances": 3 ,
+  "cpus": 7,
+  "mem": 6144,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "esnewdeveastdockerregistry.azurecr.io/eventserver:779",
+      "network": "BRIDGE",
+      "portMappings": [ { "containerPort": 85, "hostPort": 443 } ,
+        { "containerPort": 22, "hostPort": 2223 } ,
+        { "containerPort": 18189, "hostPort": 18189 } ],
+      "parameters":[ { "key": "env", "value" :"ENVIRONMENTNAME=siphonacs" },
+        { "key": "env", "value" :"ZOOKEEPERHOSTS=zk0-siphon.4kowqce0eufehoig4wcffhbwre.bx.internal.cloudapp.net,zk1-siphon.4kowqce0eufehoig4wcffhbwre.bx.internal.cloudapp.net,zk4-siphon.4kowqce0eufehoig4wcffhbwre.bx.internal.cloudapp.net" },
+        { "key": "env", "value" :"STATSDENDPOINT=10.4.6.128"} ,
+        { "key": "env", "value" :"KAFKAGTMIP=password"} ,
+        { "key": "env", "value" :"KAFKAIP=password"} ,
+        { "key": "env", "value" :"KAT_PORT=85"} ]
+    }
+  },
+  "acceptedResourceRoles": [
+    "slave_public"
+  ],
+  "uris": [
+    "file:///home/sshadmin/docker.tar.gz"
+  ]
+}

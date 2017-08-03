@@ -8,10 +8,16 @@ package com.microsoft.kafkaavailability;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /***
  * Gets property values from json files.
@@ -22,6 +28,11 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
     private String m_propFileName;
     private T m_prop;
     final Class<T> m_typeParameterClass;
+    final static Logger m_logger = LoggerFactory.getLogger(PropertiesManager.class);
+
+    private static String STRING_TYPE = "java.lang.String";
+    private static String LIST_TYPE = "java.util.List";
+    private static String INT_TYPE = "int";
 
     /***
      *
@@ -40,6 +51,7 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
         {
             String text = Resources.toString(url, Charsets.UTF_8);
             m_prop = gson.fromJson(text, m_typeParameterClass);
+            MergePropsFromEnv(m_prop);
         } else
         {
             throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
@@ -53,5 +65,42 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
     public T getProperties()
     {
         return m_prop;
+    }
+
+    private void MergePropsFromEnv(Object prop){
+        Field[] propFields = prop.getClass().getFields();
+        for(Field field : propFields){
+            String envVarName = field.getName().replaceAll(".", "_").toUpperCase();
+            String override= System.getenv(envVarName);
+            if(override != null){
+                setProperty(field.getName(), override);
+            }
+        }
+    }
+
+    public void setProperty(String propName,String override){
+        try {
+            Field field = m_prop.getClass().getDeclaredField(propName);
+            String dataType = field.getType().getCanonicalName();
+            m_logger.info("Setting " + propName + " from envirnment variable as " + override);
+            if(dataType == LIST_TYPE){
+                List<String> value = new ArrayList<String>(Arrays.asList(override.split(",")));
+                set(field,value);
+            }
+            if(dataType == INT_TYPE){
+                int value = Integer.parseInt(override);
+                set(field,value);
+            }
+        }catch(NoSuchFieldException Ex){
+            m_logger.error("Field cannot be found in the config "+ Ex.getMessage() );
+        }
+    }
+
+    private void set(Field field,Object value){
+        try{
+            field.set(m_prop,value);
+        }catch(IllegalAccessException Ex){
+            m_logger.error("Error while setting property "+ field.getName() + Ex.getMessage());
+        }
     }
 }
