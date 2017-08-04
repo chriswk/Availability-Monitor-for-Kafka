@@ -47,11 +47,13 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
         Gson gson = new Gson();
         URL url = Thread.currentThread().getContextClassLoader().getResource(propFileName);
 
+        m_logger.info("Getting config info from " + propFileName);
+
         if (url != null)
         {
             String text = Resources.toString(url, Charsets.UTF_8);
             m_prop = gson.fromJson(text, m_typeParameterClass);
-            MergePropsFromEnv(m_prop);
+            this.MergePropsFromEnv(m_prop);
         } else
         {
             throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
