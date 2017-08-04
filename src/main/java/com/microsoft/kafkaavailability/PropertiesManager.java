@@ -70,10 +70,14 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
     }
 
     private void MergePropsFromEnv(Object prop){
+        m_logger.info("Inside merge from prop");
         Field[] propFields = prop.getClass().getFields();
         for(Field field : propFields){
             String envVarName = field.getName().replaceAll(".", "_").toUpperCase();
             String override= System.getenv(envVarName);
+
+            m_logger.info("Getting env : " + envVarName + " : " + override);
+
             if(override != null){
                 setProperty(field.getName(), override);
             }
