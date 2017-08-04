@@ -32,7 +32,7 @@ RUN mkdir /etc/service/kat && ln -s  /usr/bin/sphn/kat-service/kafka-availabilit
 #install netstat
 RUN apt-get update
 RUN apt-get install net-tools
-RUN apt-get install telnet
+RUN apt-get -y install telnet
 
 ##
 ## BEGIN Enable ssh
