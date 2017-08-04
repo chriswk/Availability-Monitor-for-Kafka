@@ -75,9 +75,6 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
         for(Field field : propFields){
             String envVarName = field.getName().toUpperCase();
             String override= System.getenv(envVarName);
-
-            m_logger.info("Getting env : " + envVarName + ": " + field.getName() + " : " + override);
-
             if(override != null){
                 setProperty(field.getName(), override);
             }
@@ -88,8 +85,9 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
         try {
             Field field = m_prop.getClass().getDeclaredField(propName);
             String dataType = field.getType().getCanonicalName();
-            m_logger.info("Setting " + propName + " from envirnment variable as " + override);
+            m_logger.info("Setting " + propName + " from environment variable as " + override);
             if(dataType == LIST_TYPE){
+                m_logger.info("Found list " + field.getName() + " : " + propName);
                 List<String> value = new ArrayList<String>(Arrays.asList(override.split(",")));
                 set(field,value);
             }
@@ -104,6 +102,8 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
 
     private void set(Field field,Object value){
         try{
+            m_logger.info("Setting env : " + field.getName() + " as " + value.toString() );
+            m_logger.info("Setting env : " + field.getName() + " as " + value );
             field.set(m_prop,value);
         }catch(IllegalAccessException Ex){
             m_logger.error("Error while setting property "+ field.getName() + Ex.getMessage());
