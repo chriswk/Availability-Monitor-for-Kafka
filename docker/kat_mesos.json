@@ -6,7 +6,7 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "esnewdeveastdockerregistry.azurecr.io/kat:916",
+      "image": "esnewdeveastdockerregistry.azurecr.io/kat:947",
       "network": "BRIDGE",
       "portMappings": [ { "containerPort": 85, "hostPort": 443 } ,
         { "containerPort": 22, "hostPort": 2223 } ,
@@ -16,7 +16,9 @@
         { "key": "env", "value" :"STATSDENDPOINT=10.4.6.128"} ,
         { "key": "env", "value" :"KAFKAGTMIP=https://perftest-siphonacs.trafficmanager.net?topic="} ,
         { "key": "env", "value" :"KAFKAIP=https://evsrvrsiphonacs.eastus.cloudapp.azure.com?topic="} ,
-        { "key": "env", "value" :"KAT_PORT=85"} ]
+        { "key": "env", "value" :"KAT_PORT=85"},
+        { "key": "env", "value" :"CANARYTESTTOPICS=test1" },
+        { "key": "env", "value" :"REPORTERSCOMMASEPARATEDLIST=consoleReporter,mdmStatsdReporter"} ]
     }
   },
   "acceptedResourceRoles": [

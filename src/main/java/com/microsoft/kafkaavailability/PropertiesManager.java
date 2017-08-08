@@ -47,8 +47,6 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
         Gson gson = new Gson();
         URL url = Thread.currentThread().getContextClassLoader().getResource(propFileName);
 
-        m_logger.info("Getting config info from " + propFileName);
-
         if (url != null)
         {
             String text = Resources.toString(url, Charsets.UTF_8);
@@ -85,8 +83,6 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
         try {
             Field field = m_prop.getClass().getDeclaredField(propName);
             String dataType = field.getType().getCanonicalName();
-            m_logger.info("Setting " + propName + " from environment variable as " + override);
-
             switch (dataType){
                 case LIST_TYPE:
                     List<String> value = new ArrayList<String>(Arrays.asList(override.split(",")));
@@ -111,8 +107,7 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
 
     private void set(Field field,Object value){
         try{
-            m_logger.info("Setting env : " + field.getName() + " as " + value.toString() );
-            m_logger.info("Setting env : " + field.getName() + " as " + value );
+            m_logger.debug("Setting env : " + field.getName() + " as " + value );
             field.set(m_prop,value);
         }catch(IllegalAccessException Ex){
             m_logger.error("Error while setting property "+ field.getName() + Ex.getMessage());
