@@ -6,17 +6,17 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "esnewdeveastdockerregistry.azurecr.io/kat:947",
+      "image": "image",
       "network": "BRIDGE",
       "portMappings": [ { "containerPort": 85, "hostPort": 443 } ,
         { "containerPort": 22, "hostPort": 2223 } ,
         { "containerPort": 18189, "hostPort": 18189 } ],
-      "parameters":[ { "key": "env", "value" :"ENVIRONMENTNAME=siphonacs" },
-        { "key": "env", "value" :"ZOOKEEPERHOSTS=zk0-siphon.4kowqce0eufehoig4wcffhbwre.bx.internal.cloudapp.net,zk1-siphon.4kowqce0eufehoig4wcffhbwre.bx.internal.cloudapp.net,zk4-siphon.4kowqce0eufehoig4wcffhbwre.bx.internal.cloudapp.net" },
-        { "key": "env", "value" :"STATSDENDPOINT=10.4.6.128"} ,
-        { "key": "env", "value" :"KAFKAGTMIP=https://perftest-siphonacs.trafficmanager.net?topic="} ,
-        { "key": "env", "value" :"KAFKAIP=https://evsrvrsiphonacs.eastus.cloudapp.azure.com?topic="} ,
-        { "key": "env", "value" :"KAT_PORT=85"},
+      "parameters":[ { "key": "env", "value" :"ENVIRONMENTNAME=name" },
+        { "key": "env", "value" :"ZOOKEEPERHOSTS=zkList" },
+        { "key": "env", "value" :"STATSDENDPOINT=endpoint"} ,
+        { "key": "env", "value" :"KAFKAGTMIP=gtmendpoint"} ,
+        { "key": "env", "value" :"KAFKAIP=kafkaip"} ,
+        { "key": "env", "value" :"KAT_PORT=port"},
         { "key": "env", "value" :"CANARYTESTTOPICS=test1" },
         { "key": "env", "value" :"REPORTERSCOMMASEPARATEDLIST=consoleReporter,mdmStatsdReporter"} ]
     }
