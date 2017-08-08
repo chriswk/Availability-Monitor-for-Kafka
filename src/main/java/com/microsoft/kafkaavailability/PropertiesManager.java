@@ -30,9 +30,9 @@ public class PropertiesManager<T> implements IPropertiesManager<T>
     final Class<T> m_typeParameterClass;
     final static Logger m_logger = LoggerFactory.getLogger(PropertiesManager.class);
 
-    private static String STRING_TYPE = "java.lang.String";
-    private static String LIST_TYPE = "java.util.List";
-    private static String INT_TYPE = "int";
+    private static final String STRING_TYPE = "java.lang.String";
+    private static final String LIST_TYPE = "java.util.List";
+    private static final String INT_TYPE = "int";
 
     /***
      *
